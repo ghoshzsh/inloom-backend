@@ -9,7 +9,7 @@
     "start": "npm run compile && node dist/index.js",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
-    "seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "Aniruddha Ghosh",
@@ -32,6 +32,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
