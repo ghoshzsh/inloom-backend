@@ -1,5 +1,5 @@
 // prisma/seed.ts
-import { PrismaClient, UserRole, OrderStatus, PaymentStatus, ProductStatus, ShippingStatus, AddressType } from '../src/generated/prisma'
+import { PrismaClient, UserRole, OrderStatus, PaymentStatus, ProductStatus, ShippingStatus, AddressType } from '@prisma/client'
 import { faker } from '@faker-js/faker'
 import * as argon2 from 'argon2'
 

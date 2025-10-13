@@ -9,8 +9,8 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { expressMiddleware } from '@as-integrations/express5';
 
 // GraphQL schemas and resolvers
-import { shopTypeDefs, shopResolvers } from './graphql/shop';
-import { createShopContext } from './graphql/shop/context';
+import { shopTypeDefs, shopResolvers, createShopContext } from './graphql/shop';
+import { sellerTypeDefs, sellerResolvers, createSellerContext } from './graphql/seller';
 import { prisma } from './config/database';
 
 // Logger
@@ -41,7 +41,7 @@ export async function startServer() {
   app.get('/health', (req, res) => {
     res.status(200).json({
       status: 'OK',
-      timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || 'development',
     });
@@ -65,15 +65,45 @@ export async function startServer() {
     }),
     express.json(),
     expressMiddleware(shopServer, {
-      context: createShopContext,
+      context: async ({ req }) => {
+        try {
+          return await createShopContext({ req });
+        } catch (err) {
+          console.error('❌ Error in createShopContext:', err.message);
+          throw err;
+        }
+      },
     })
   );
 
-  // Seller GraphQL Server (coming next)
-  // app.use('/graphql/seller', ...)
+  // Seller GraphQL Server (for vendors)
+  const sellerServer = new ApolloServer({
+    typeDefs: sellerTypeDefs,
+    resolvers: sellerResolvers,
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    introspection: process.env.NODE_ENV !== 'production',
+  });
 
-  // Admin GraphQL Server (coming next)
-  // app.use('/graphql/admin', ...)
+  await sellerServer.start();
+
+  app.use(
+    '/graphql/seller',
+    cors<cors.CorsRequest>({
+      origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+      credentials: true,
+    }),
+    express.json(),
+    expressMiddleware(sellerServer, {
+      context: async ({ req }) => {
+        try {
+          return await createSellerContext({ req });
+        } catch (err) {
+          console.error('❌ Error in createSellerContext:', err.message);
+          throw err;
+        }
+      },
+    })
+  );
 
   // 404 handler
   app.use((req, res) => {
@@ -94,13 +124,14 @@ export async function startServer() {
 
   logger.info(`🚀 Server ready`);
   logger.info(`📍 Health check: http://localhost:${PORT}/health`);
-  logger.info(`⚽ GraphQL Playground: http://localhost:4000/graphql/shop`)
   logger.info(`🛍️  Shop GraphQL: http://localhost:${PORT}/graphql/shop`);
+  logger.info(`🏪 Seller GraphQL: http://localhost:${PORT}/graphql/seller`);
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {
     logger.info('SIGTERM signal received: closing HTTP server');
     await shopServer.stop();
+    await sellerServer.stop();
     httpServer.close(() => {
       logger.info('HTTP server closed');
       prisma.$disconnect();
