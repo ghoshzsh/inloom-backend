@@ -11,6 +11,7 @@ import { expressMiddleware } from '@as-integrations/express5';
 // GraphQL schemas and resolvers
 import { shopTypeDefs, shopResolvers, createShopContext } from './graphql/shop';
 import { sellerTypeDefs, sellerResolvers, createSellerContext } from './graphql/seller';
+import { adminTypeDefs, adminResolvers, createAdminContext } from './graphql/admin';
 import { prisma } from './config/database';
 
 // Logger
@@ -105,6 +106,35 @@ export async function startServer() {
     })
   );
 
+  // Admin GraphQL Server (for platform administrators)
+  const adminServer = new ApolloServer({
+    typeDefs: adminTypeDefs,
+    resolvers: adminResolvers,
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    introspection: process.env.NODE_ENV !== 'production',
+  });
+
+  await adminServer.start();
+
+  app.use(
+    '/graphql/admin',
+    cors<cors.CorsRequest>({
+      origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+      credentials: true,
+    }),
+    express.json(),
+    expressMiddleware(adminServer, {
+      context: async ({ req }) => {
+        try {
+          return await createAdminContext({ req });
+        } catch (err) {
+          console.error('❌ Error in createAdminContext:', err.message);
+          throw err;
+        }
+      },
+    })
+  );
+
   // 404 handler
   app.use((req, res) => {
     res.status(404).json({ error: 'Not Found' });
@@ -122,16 +152,20 @@ export async function startServer() {
     httpServer.listen({ port: PORT }, resolve)
   );
 
-  logger.info(`🚀 Server ready`);
+  logger.info(`🚀 Server ready at http://localhost:${PORT}`);
   logger.info(`📍 Health check: http://localhost:${PORT}/health`);
   logger.info(`🛍️  Shop GraphQL: http://localhost:${PORT}/graphql/shop`);
   logger.info(`🏪 Seller GraphQL: http://localhost:${PORT}/graphql/seller`);
+  logger.info(`👨‍💼 Admin GraphQL: http://localhost:${PORT}/graphql/admin`);
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {
     logger.info('SIGTERM signal received: closing HTTP server');
-    await shopServer.stop();
-    await sellerServer.stop();
+    await Promise.all([
+      shopServer.stop(),
+      sellerServer.stop(),
+      adminServer.stop(),
+    ]);
     httpServer.close(() => {
       logger.info('HTTP server closed');
       prisma.$disconnect();
