@@ -1,7 +1,7 @@
-import { ShopContext } from '../../../types/context';
+import { ShopContext } from '../../../types/context.js';
 import { GraphQLError } from 'graphql';
 import * as argon2 from 'argon2';
-import { generateToken } from '../../../middleware/auth';
+import { generateToken } from '../../../middleware/auth.js';
 
 export const Mutation = {
   // Auth

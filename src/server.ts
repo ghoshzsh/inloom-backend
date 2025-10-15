@@ -9,10 +9,10 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { expressMiddleware } from '@as-integrations/express5';
 
 // GraphQL schemas and resolvers
-import { shopTypeDefs, shopResolvers, createShopContext } from './graphql/shop';
-import { sellerTypeDefs, sellerResolvers, createSellerContext } from './graphql/seller';
-import { adminTypeDefs, adminResolvers, createAdminContext } from './graphql/admin';
-import { prisma } from './config/database';
+import { shopTypeDefs, shopResolvers, createShopContext } from './graphql/shop/index.js';
+import { sellerTypeDefs, sellerResolvers, createSellerContext } from './graphql/seller/index.js';
+import { adminTypeDefs, adminResolvers, createAdminContext } from './graphql/admin/index.js';
+import { prisma } from './config/database.js';
 
 // Logger
 const logger = pino({
@@ -70,7 +70,7 @@ export async function startServer() {
         try {
           return await createShopContext({ req });
         } catch (err) {
-          console.error('❌ Error in createShopContext:', err.message);
+          logger.error(`❌ Error in createShopContext: ${err.message}`);
           throw err;
         }
       },
@@ -99,7 +99,7 @@ export async function startServer() {
         try {
           return await createSellerContext({ req });
         } catch (err) {
-          console.error('❌ Error in createSellerContext:', err.message);
+          logger.error(`❌ Error in createSellerContext: ${err.message}`);
           throw err;
         }
       },
@@ -128,7 +128,7 @@ export async function startServer() {
         try {
           return await createAdminContext({ req });
         } catch (err) {
-          console.error('❌ Error in createAdminContext:', err.message);
+          logger.error(`❌ Error in createAdminContext: ${err.message}`);
           throw err;
         }
       },

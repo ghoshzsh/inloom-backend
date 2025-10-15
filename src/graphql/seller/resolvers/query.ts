@@ -1,4 +1,4 @@
-import { SellerContext } from '../context';
+import { SellerContext } from '../context.js';
 import { GraphQLError } from 'graphql';
 
 export const Query = {

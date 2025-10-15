@@ -1,4 +1,4 @@
-import { AdminContext } from '../context';
+import { AdminContext } from '../context.js';
 import { GraphQLError } from 'graphql';
 import * as argon2 from 'argon2';
 

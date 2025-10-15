@@ -1,3 +1,3 @@
-export { shopTypeDefs } from './schema';
-export { shopResolvers } from './resolvers';
-export { createShopContext } from './context';
+export { shopTypeDefs } from './schema.js';
+export { shopResolvers } from './resolvers/index.js';
+export { createShopContext } from './context.js';

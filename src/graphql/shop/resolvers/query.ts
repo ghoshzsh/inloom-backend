@@ -1,4 +1,4 @@
-import { ShopContext } from '../../../types/context';
+import { ShopContext } from '../../../types/context.js';
 import { GraphQLError } from 'graphql';
 
 export const Query = {

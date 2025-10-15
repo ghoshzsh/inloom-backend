@@ -1,7 +1,7 @@
 import { Request } from 'express';
-import { BaseContext } from '../../types/context';
-import { prisma } from '../../config/database';
-import { extractToken, verifyToken } from '../../middleware/auth';
+import { BaseContext } from '../../types/context.js';
+import { prisma } from '../../config/database.js';
+import { extractToken, verifyToken } from '../../middleware/auth.js';
 import { GraphQLError } from 'graphql';
 
 export interface SellerContext extends BaseContext {

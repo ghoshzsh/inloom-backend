@@ -1,4 +1,4 @@
-import { AdminContext } from '../context';
+import { AdminContext } from '../context.js';
 
 export const Query = {
   // Dashboard Analytics
