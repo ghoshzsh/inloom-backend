@@ -1,4 +1,4 @@
-import { sharedTypeDefs } from "../shared/schema";
+import { sharedTypeDefs } from "../shared/schema.js";
 
 export const sellerTypeDefs = `#graphql
 

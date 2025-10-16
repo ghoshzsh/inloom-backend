@@ -4,8 +4,8 @@
     "outDir": "dist",
     "lib": ["es2023"],
     "target": "es2023",
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "types": ["node"]
   }

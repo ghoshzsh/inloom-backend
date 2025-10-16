@@ -57,7 +57,7 @@ enum AddressType {
 
 // Core User Management
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   email     String   @unique
   password  String
   firstName String
@@ -85,7 +85,7 @@ model User {
 }
 
 model Address {
-  id           String      @id @default(cuid())
+  id           String      @id @default(uuid())
   userId       String
   type         AddressType @default(SHIPPING)
   firstName    String
@@ -111,7 +111,7 @@ model Address {
 
 // Seller Management
 model SellerProfile {
-  id           String  @id @default(cuid())
+  id           String  @id @default(uuid())
   userId       String  @unique
   businessName String
   businessType String? // individual, company, partnership
@@ -140,7 +140,7 @@ model SellerProfile {
 
 // Category Management
 model Category {
-  id          String  @id @default(cuid())
+  id          String  @id @default(uuid())
   name        String
   slug        String  @unique
   description String?
@@ -162,7 +162,7 @@ model Category {
 
 // Product Management
 model Product {
-  id               String        @id @default(cuid())
+  id               String        @id @default(uuid())
   name             String
   slug             String        @unique
   description      String?
@@ -205,7 +205,7 @@ model Product {
 }
 
 model ProductImage {
-  id        String  @id @default(cuid())
+  id        String  @id @default(uuid())
   productId String
   url       String
   altText   String?
@@ -222,7 +222,7 @@ model ProductImage {
 
 // Product Variants (for size, color, material combinations)
 model ProductVariant {
-  id            String  @id @default(cuid())
+  id            String  @id @default(uuid())
   productId     String
   sku           String  @unique
   name          String // e.g., "Small - Gold - Diamond"
@@ -246,7 +246,7 @@ model ProductVariant {
 
 // Product Attributes (for jewelry-specific attributes)
 model ProductAttribute {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid())
   productId String
   name      String // e.g., "Metal Type", "Stone Type", "Carat Weight"
   value     String // e.g., "18K Gold", "Diamond", "0.5ct"
@@ -259,7 +259,7 @@ model ProductAttribute {
 
 // Shopping Cart
 model CartItem {
-  id        String  @id @default(cuid())
+  id        String  @id @default(uuid())
   userId    String
   productId String
   variantId String?
@@ -279,7 +279,7 @@ model CartItem {
 
 // Wishlist
 model WishlistItem {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid())
   userId    String
   productId String
 
@@ -295,7 +295,7 @@ model WishlistItem {
 
 // Order Management
 model Order {
-  id          String @id @default(cuid())
+  id          String @id @default(uuid())
   orderNumber String @unique // Human-readable order number
   userId      String
   sellerId    String
@@ -331,7 +331,7 @@ model Order {
 }
 
 model OrderItem {
-  id         String  @id @default(cuid())
+  id         String  @id @default(uuid())
   orderId    String
   productId  String
   variantId  String?
@@ -354,7 +354,7 @@ model OrderItem {
 
 // Payment Management
 model Payment {
-  id            String        @id @default(cuid())
+  id            String        @id @default(uuid())
   orderId       String
   amount        Float
   currency      String        @default("INR")
@@ -373,7 +373,7 @@ model Payment {
 
 // Shipping Management
 model Shipping {
-  id             String         @id @default(cuid())
+  id             String         @id @default(uuid())
   orderId        String         @unique
   method         String // standard, express, overnight
   carrier        String? // UPS, FedEx, USPS
@@ -393,7 +393,7 @@ model Shipping {
 
 // Review System
 model Review {
-  id         String  @id @default(cuid())
+  id         String  @id @default(uuid())
   userId     String
   productId  String
   rating     Int // 1-5
