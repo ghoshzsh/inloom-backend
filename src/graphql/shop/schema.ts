@@ -1,24 +1,8 @@
+import { sharedTypeDefs } from "../shared/schema";
+
 export const shopTypeDefs = `#graphql
-  # Scalars
-  scalar DateTime
-  scalar JSON
 
-  # Enums
-  enum ProductStatus {
-    DRAFT
-    ACTIVE
-    INACTIVE
-    OUT_OF_STOCK
-  }
-
-  enum OrderStatus {
-    PENDING
-    CONFIRMED
-    PROCESSING
-    SHIPPED
-    DELIVERED
-    CANCELLED
-  }
+  ${sharedTypeDefs}
 
   # Types
   type User {
@@ -26,7 +10,7 @@ export const shopTypeDefs = `#graphql
     email: String!
     firstName: String!
     lastName: String!
-    phone: String
+    phone: String!
     createdAt: DateTime!
   }
 
@@ -88,24 +72,6 @@ export const shopTypeDefs = `#graphql
     value: String!
   }
 
-  type ProductConnection {
-    edges: [ProductEdge!]!
-    pageInfo: PageInfo!
-    totalCount: Int!
-  }
-
-  type ProductEdge {
-    node: Product!
-    cursor: String!
-  }
-
-  type PageInfo {
-    hasNextPage: Boolean!
-    hasPreviousPage: Boolean!
-    startCursor: String
-    endCursor: String
-  }
-
   type SellerProfile {
     id: ID!
     businessName: String!
@@ -143,7 +109,7 @@ export const shopTypeDefs = `#graphql
     type: String!
     firstName: String!
     lastName: String!
-    company: String
+    phone: String!
     addressLine1: String!
     addressLine2: String
     city: String!
@@ -210,7 +176,7 @@ export const shopTypeDefs = `#graphql
     password: String!
     firstName: String!
     lastName: String!
-    phone: String
+    phone: String!
   }
 
   input LoginInput {
@@ -222,7 +188,7 @@ export const shopTypeDefs = `#graphql
     type: String!
     firstName: String!
     lastName: String!
-    company: String
+    phone: String!
     addressLine1: String!
     addressLine2: String
     city: String!

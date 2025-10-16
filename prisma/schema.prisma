@@ -16,7 +16,6 @@ enum UserRole {
   CUSTOMER
   SELLER
   ADMIN
-  SUPER_ADMIN
 }
 
 enum OrderStatus {
@@ -63,7 +62,7 @@ model User {
   password  String
   firstName String
   lastName  String
-  phone     String?
+  phone     String
   role      UserRole @default(CUSTOMER)
   isActive  Boolean  @default(true)
 
@@ -91,7 +90,7 @@ model Address {
   type         AddressType @default(SHIPPING)
   firstName    String
   lastName     String
-  company      String?
+  phone        String
   addressLine1 String
   addressLine2 String?
   city         String

@@ -1,46 +1,8 @@
+import { sharedTypeDefs } from "../shared/schema";
+
 export const adminTypeDefs = `#graphql
-  # Scalars
-  scalar DateTime
-  scalar JSON
 
-  # Enums
-  enum UserRole {
-    CUSTOMER
-    SELLER
-    ADMIN
-  }
-
-  enum ProductStatus {
-    DRAFT
-    ACTIVE
-    INACTIVE
-    OUT_OF_STOCK
-  }
-
-  enum OrderStatus {
-    PENDING
-    CONFIRMED
-    PROCESSING
-    SHIPPED
-    DELIVERED
-    CANCELLED
-    REFUNDED
-  }
-
-  enum PaymentStatus {
-    PENDING
-    PAID
-    FAILED
-    REFUNDED
-  }
-
-  enum ShippingStatus {
-    PENDING
-    PICKED_UP
-    IN_TRANSIT
-    OUT_FOR_DELIVERY
-    DELIVERED
-  }
+  ${sharedTypeDefs}
 
   # Types
   type User {
@@ -48,7 +10,7 @@ export const adminTypeDefs = `#graphql
     email: String!
     firstName: String!
     lastName: String!
-    phone: String
+    phone: String!
     role: UserRole!
     isActive: Boolean!
     createdAt: DateTime!
@@ -179,7 +141,7 @@ export const adminTypeDefs = `#graphql
     id: ID!
     firstName: String!
     lastName: String!
-    company: String
+    phone: String!
     addressLine1: String!
     addressLine2: String
     city: String!
@@ -295,17 +257,6 @@ export const adminTypeDefs = `#graphql
     cursor: String!
   }
 
-  type ProductConnection {
-    edges: [ProductEdge!]!
-    pageInfo: PageInfo!
-    totalCount: Int!
-  }
-
-  type ProductEdge {
-    node: Product!
-    cursor: String!
-  }
-
   type OrderConnection {
     edges: [OrderEdge!]!
     pageInfo: PageInfo!
@@ -328,20 +279,13 @@ export const adminTypeDefs = `#graphql
     cursor: String!
   }
 
-  type PageInfo {
-    hasNextPage: Boolean!
-    hasPreviousPage: Boolean!
-    startCursor: String
-    endCursor: String
-  }
-
   # Input Types
   input CreateUserInput {
     email: String!
     password: String!
     firstName: String!
     lastName: String!
-    phone: String
+    phone: String!
     role: UserRole!
   }
 

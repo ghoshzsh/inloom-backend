@@ -1,40 +1,8 @@
+import { sharedTypeDefs } from "../shared/schema";
+
 export const sellerTypeDefs = `#graphql
-  # Scalars
-  scalar DateTime
-  scalar JSON
 
-  # Enums
-  enum ProductStatus {
-    DRAFT
-    ACTIVE
-    INACTIVE
-    OUT_OF_STOCK
-  }
-
-  enum OrderStatus {
-    PENDING
-    CONFIRMED
-    PROCESSING
-    SHIPPED
-    DELIVERED
-    CANCELLED
-    REFUNDED
-  }
-
-  enum PaymentStatus {
-    PENDING
-    PAID
-    FAILED
-    REFUNDED
-  }
-
-  enum ShippingStatus {
-    PENDING
-    PICKED_UP
-    IN_TRANSIT
-    OUT_FOR_DELIVERY
-    DELIVERED
-  }
+  ${sharedTypeDefs}
 
   # Types
   type SellerProfile {
@@ -170,7 +138,7 @@ export const sellerTypeDefs = `#graphql
     id: ID!
     firstName: String!
     lastName: String!
-    company: String
+    phone: String!
     addressLine1: String!
     addressLine2: String
     city: String!
@@ -219,24 +187,6 @@ export const sellerTypeDefs = `#graphql
     product: Product!
     totalSold: Int!
     totalRevenue: Float!
-  }
-
-  type ProductConnection {
-    edges: [ProductEdge!]!
-    pageInfo: PageInfo!
-    totalCount: Int!
-  }
-
-  type ProductEdge {
-    node: Product!
-    cursor: String!
-  }
-
-  type PageInfo {
-    hasNextPage: Boolean!
-    hasPreviousPage: Boolean!
-    startCursor: String
-    endCursor: String
   }
 
   # Input Types
