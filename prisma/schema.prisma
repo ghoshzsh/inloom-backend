@@ -1,17 +1,16 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// schema.prisma
 
 generator client {
   provider = "prisma-client-js"
-  //output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql" // or "mysql" based on your preference
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Enums
+// ==================== ENUMS ====================
+
 enum UserRole {
   CUSTOMER
   SELLER
@@ -20,7 +19,6 @@ enum UserRole {
 
 enum OrderStatus {
   PENDING
-  CONFIRMED
   PROCESSING
   SHIPPED
   DELIVERED
@@ -30,7 +28,7 @@ enum OrderStatus {
 
 enum PaymentStatus {
   PENDING
-  PAID
+  COMPLETED
   FAILED
   REFUNDED
 }
@@ -50,198 +48,150 @@ enum ShippingStatus {
   DELIVERED
 }
 
-enum AddressType {
-  SHIPPING
-  BILLING
-}
+// ==================== USER MANAGEMENT ====================
 
-// Core User Management
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  phone     String
-  role      UserRole @default(CUSTOMER)
-  isActive  Boolean  @default(true)
-
-  // Timestamps
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  lastLogin DateTime?
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  role          UserRole @default(CUSTOMER)
+  firstName     String?
+  lastName      String?
+  phoneNumber   String?
+  isVerified    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastLogin     DateTime?
 
   // Relations
+  customer      Customer?
+  seller        Seller?
   addresses     Address[]
-  orders        Order[]
-  cartItems     CartItem[]
-  reviews       Review[]
-  wishlistItems WishlistItem[]
 
-  // Seller specific
-  sellerProfile SellerProfile?
-
+  @@index([email])
+  @@index([role])
   @@map("users")
 }
 
+model Customer {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cart       Cart?
+  orders     Order[]
+  reviews    Review[]
+  wishlist   Wishlist[]
+
+  @@map("customers")
+}
+
+model Seller {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  shopName        String   @unique
+  shopDescription String?  @db.Text
+  shopLogo        String?
+  shopBanner      String?
+  isVerified      Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  rating          Float    @default(0)
+  totalSales      Int      @default(0)
+  socials         Json? // e.g., {"instagram": "insta_handle", "twitter": "twitter_handle"}
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+  orderItems OrderItem[]
+
+  @@index([shopName])
+  @@index([isActive])
+  @@map("sellers")
+}
+
 model Address {
-  id           String      @id @default(uuid())
+  id           String   @id @default(uuid())
   userId       String
-  type         AddressType @default(SHIPPING)
-  firstName    String
-  lastName     String
-  phone        String
+  fullName     String
+  phoneNumber  String
   addressLine1 String
   addressLine2 String?
   city         String
   state        String
+  country      String
   postalCode   String
-  country      String      @default("IN")
-  isDefault    Boolean     @default(false)
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders Order[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  @@index([userId])
   @@map("addresses")
 }
 
-// Seller Management
-model SellerProfile {
-  id           String  @id @default(uuid())
-  userId       String  @unique
-  businessName String
-  businessType String? // individual, company, partnership
-  taxId        String?
-  description  String?
-  logo         String?
-  banner       String?
-  phone        String?
-  website      String?
-  isVerified   Boolean @default(false)
-  isActive     Boolean @default(true)
+// ==================== PRODUCT MANAGEMENT ====================
 
-  // Commission settings
-  commissionRate Float @default(10.0) // percentage
-
-  // Relations
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products Product[]
-  orders   Order[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("seller_profiles")
-}
-
-// Category Management
 model Category {
-  id          String  @id @default(uuid())
-  name        String
-  slug        String  @unique
-  description String?
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
   image       String?
   parentId    String?
-  isActive    Boolean @default(true)
   sortOrder   Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryHierarchy")
   products Product[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  @@index([slug])
+  @@index([parentId])
   @@map("categories")
 }
 
-// Product Management
 model Product {
-  id               String        @id @default(uuid())
-  name             String
-  slug             String        @unique
-  description      String?
-  shortDescription String?
-  sku              String        @unique
-  status           ProductStatus @default(DRAFT)
-
-  // Pricing
-  basePrice Float
-  salePrice Float?
-  costPrice Float?
-
-  // Inventory
-  trackInventory    Boolean @default(true)
-  stockQuantity     Int     @default(0)
-  lowStockThreshold Int     @default(10)
-
-  // SEO & Meta
-  metaTitle       String?
-  metaDescription String?
+  id              String        @id @default(uuid())
+  sellerId        String
+  categoryId      String
+  name            String
+  slug            String        @unique
+  shortDescription String?      @db.Text
+  description     String        @db.Text
+  status          ProductStatus @default(DRAFT)
+  attributes      ProductAttribute[] // e.g., color, material
+  weight          Float?        // Weight in grams
+  dimensions      String?       // e.g., "10x5x3 cm"
+  averageRating   Float         @default(0)
+  totalReviews    Int           @default(0)
+  totalSales      Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relations
-  sellerId   String
-  categoryId String
-  seller     SellerProfile @relation(fields: [sellerId], references: [id])
-  category   Category      @relation(fields: [categoryId], references: [id])
+  seller              Seller              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category            Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  defaultImages       ProductImage[]
+  colorVariants       ProductColorVariant[]
+  reviews             Review[]
+  wishlist            Wishlist[]
 
-  images        ProductImage[]
-  variants      ProductVariant[]
-  attributes    ProductAttribute[]
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  reviews       Review[]
-  wishlistItems WishlistItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([slug])
+  @@index([status])
   @@map("products")
-}
-
-model ProductImage {
-  id        String  @id @default(uuid())
-  productId String
-  url       String
-  altText   String?
-  sortOrder Int     @default(0)
-  isMain    Boolean @default(false)
-
-  // Relations
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@map("product_images")
-}
-
-// Product Variants (for size, color, material combinations)
-model ProductVariant {
-  id            String  @id @default(uuid())
-  productId     String
-  sku           String  @unique
-  name          String // e.g., "Small - Gold - Diamond"
-  price         Float? // Override base price if needed
-  stockQuantity Int     @default(0)
-  isActive      Boolean @default(true)
-
-  // Variant attributes (JSON for flexibility)
-  attributes Json // { "size": "Small", "color": "Gold", "material": "Diamond" }
-
-  // Relations
-  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  cartItems  CartItem[]
-  orderItems OrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("product_variants")
 }
 
 // Product Attributes (for jewelry-specific attributes)
@@ -254,160 +204,247 @@ model ProductAttribute {
   // Relations
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  @@index([productId])
   @@map("product_attributes")
 }
 
-// Shopping Cart
-model CartItem {
-  id        String  @id @default(uuid())
-  userId    String
+// Default product images (shown regardless of color selection)
+model ProductImage {
+  id        String   @id @default(uuid())
   productId String
-  variantId String?
-  quantity  Int     @default(1)
+  imageUrl  String
+  altText   String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
 
   // Relations
-  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@index([productId])
+  @@map("product_images")
+}
 
-  @@unique([userId, productId, variantId])
+// Color variants of a product
+model ProductColorVariant {
+  id          String   @id @default(uuid())
+  productId   String
+  colorName   String   // e.g., "Red", "Blue", "Yellow"
+  colorCode   String?  // Hex code e.g., "#FF0000"
+  isAvailable Boolean  @default(true)
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product       Product                   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  images        ColorVariantImage[]
+  sizeVariants  ProductSizeVariant[]
+
+  @@unique([productId, colorName])
+  @@index([productId])
+  @@map("product_color_variants")
+}
+
+// Images specific to each color variant
+model ColorVariantImage {
+  id             String   @id @default(uuid())
+  colorVariantId String
+  imageUrl       String
+  altText        String?
+  position       Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  colorVariant ProductColorVariant @relation(fields: [colorVariantId], references: [id], onDelete: Cascade)
+
+  @@index([colorVariantId])
+  @@map("color_variant_images")
+}
+
+// Size variants under each color variant with individual pricing and stock
+model ProductSizeVariant {
+  id             String   @id @default(uuid())
+  colorVariantId String
+  sizeName       String   // e.g., "S", "M", "L", "XL", "X", "Custom"
+  sku            String   @unique // Unique identifier for this specific variant
+  basePrice      Float
+  salePrice      Float?   // Original price for showing discounts
+  stock          Int      @default(0)
+  lowStockThreshold Int   @default(5)
+  isAvailable    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  colorVariant ProductColorVariant @relation(fields: [colorVariantId], references: [id], onDelete: Cascade)
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+
+  @@unique([colorVariantId, sizeName])
+  @@index([colorVariantId])
+  @@index([sku])
+  @@map("product_size_variants")
+}
+
+// ==================== CART & WISHLIST ====================
+
+model Cart {
+  id         String   @id @default(uuid())
+  customerId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  customer Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items    CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id            String   @id @default(uuid())
+  cartId        String
+  sizeVariantId String
+  quantity      Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  cart        Cart               @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  sizeVariant ProductSizeVariant @relation(fields: [sizeVariantId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, sizeVariantId])
+  @@index([cartId])
   @@map("cart_items")
 }
 
-// Wishlist
-model WishlistItem {
-  id        String @id @default(uuid())
-  userId    String
-  productId String
+model Wishlist {
+  id         String   @id @default(uuid())
+  customerId String
+  productId  String
+  createdAt  DateTime @default(now())
 
   // Relations
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-
-  @@unique([userId, productId])
-  @@map("wishlist_items")
+  @@unique([customerId, productId])
+  @@index([customerId])
+  @@map("wishlists")
 }
 
-// Order Management
+// ==================== ORDER MANAGEMENT ====================
+
 model Order {
-  id          String @id @default(uuid())
-  orderNumber String @unique // Human-readable order number
-  userId      String
-  sellerId    String
-  addressId   String
-
-  // Order totals
-  subtotal       Float
-  taxAmount      Float @default(0)
-  shippingAmount Float @default(0)
-  discountAmount Float @default(0)
-  totalAmount    Float
-
-  // Status tracking
-  status         OrderStatus    @default(PENDING)
-  paymentStatus  PaymentStatus  @default(PENDING)
-  shippingStatus ShippingStatus @default(PENDING)
-
-  // Additional info
-  notes String?
+  id              String        @id @default(uuid())
+  customerId      String
+  orderNumber     String        @unique
+  status          OrderStatus   @default(PENDING)
+  shippingAddressId String
+  billingAddressId  String?
+  subtotal        Float
+  shippingCost    Float         @default(0)
+  taxAmount       Float         @default(0)
+  discountAmount  Float         @default(0)
+  totalAmount     Float
+  notes           String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relations
-  user     User          @relation(fields: [userId], references: [id])
-  seller   SellerProfile @relation(fields: [sellerId], references: [id])
-  address  Address       @relation(fields: [addressId], references: [id])
-  items    OrderItem[]
-  payments Payment[]
-  shipping Shipping?
+  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  shippingAddress Address       @relation(fields: [shippingAddressId], references: [id], onDelete: Restrict)
+  items           OrderItem[]
+  payment         Payment?
+  shipment        Shipment?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  @@index([customerId])
+  @@index([orderNumber])
+  @@index([status])
   @@map("orders")
 }
 
 model OrderItem {
-  id         String  @id @default(uuid())
-  orderId    String
-  productId  String
-  variantId  String?
-  quantity   Int
-  unitPrice  Float
-  totalPrice Float
-
-  // Snapshot data (in case product details change)
-  productName  String
-  productImage String?
-  variantData  Json? // Snapshot of variant attributes
+  id            String   @id @default(uuid())
+  orderId       String
+  sellerId      String
+  sizeVariantId String
+  quantity      Int
+  priceAtTime   Float    // Price at the time of purchase
+  subtotal      Float    // quantity * priceAtTime
+  createdAt     DateTime @default(now())
 
   // Relations
-  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product         @relation(fields: [productId], references: [id])
-  variant ProductVariant? @relation(fields: [variantId], references: [id])
+  order       Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sizeVariant ProductSizeVariant @relation(fields: [sizeVariantId], references: [id], onDelete: Restrict)
+  seller      Seller             @relation(fields: [sellerId], references: [id], onDelete: Restrict)
 
+  @@index([orderId])
+  @@index([sellerId])
+  @@index([sizeVariantId])
   @@map("order_items")
 }
 
-// Payment Management
 model Payment {
-  id            String        @id @default(uuid())
-  orderId       String
-  amount        Float
-  currency      String        @default("INR")
-  status        PaymentStatus @default(PENDING)
-  paymentMethod String // stripe, paypal, etc.
-  transactionId String? // External payment gateway transaction ID
+  id              String        @id @default(uuid())
+  orderId         String        @unique
+  paymentMethod   String        // e.g., "credit_card", "paypal", "stripe"
+  transactionId   String?       @unique
+  status          PaymentStatus @default(PENDING)
+  amount          Float
+  currency        String        @default("USD")
+  paymentDate     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relations
-  order Order @relation(fields: [orderId], references: [id])
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  @@index([orderId])
+  @@index([transactionId])
   @@map("payments")
 }
 
-// Shipping Management
-model Shipping {
-  id             String         @id @default(uuid())
-  orderId        String         @unique
-  method         String // standard, express, overnight
-  carrier        String? // UPS, FedEx, USPS
-  trackingNumber String?
-  status         ShippingStatus @default(PENDING)
-  shippedAt      DateTime?
-  deliveredAt    DateTime?
+model Shipment {
+  id              String   @id @default(uuid())
+  orderId         String   @unique
+  carrier         String?  // e.g., "UPS", "FedEx", "USPS"
+  trackingNumber  String?
+  shippedAt       DateTime?
+  estimatedDelivery DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  shippingStatus ShippingStatus @default(PENDING)
 
   // Relations
-  order Order @relation(fields: [orderId], references: [id])
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("shipping")
+  @@index([orderId])
+  @@index([trackingNumber])
+  @@map("shipments")
 }
 
-// Review System
+// ==================== REVIEWS ====================
+
 model Review {
-  id         String  @id @default(uuid())
-  userId     String
+  id         String   @id @default(uuid())
   productId  String
-  rating     Int // 1-5
+  customerId String
+  rating     Int      // 1-5 stars
   title      String?
-  comment    String?
-  isVerified Boolean @default(false) // Verified purchase
+  comment    String?  @db.Text
+  isVerifiedPurchase Boolean @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, productId]) // One review per user per product
+  @@unique([productId, customerId])
+  @@index([productId])
+  @@index([customerId])
+  @@index([rating])
   @@map("reviews")
 }

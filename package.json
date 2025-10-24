@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsc && node dist/src/index.js",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:client": "npx prisma generate client"
   },
   "keywords": [],
   "author": "Aniruddha Ghosh",
